@@ -4,7 +4,7 @@
 # Define the number of master and worker nodes
 # If this number is changed, remember to update setup-hosts.sh script with the new hosts IP details in /etc/hosts of each VM.
 NUM_MASTER_NODE = 1
-NUM_WORKER_NODE = 2
+NUM_WORKER_NODE = 1
 
 #IP_NW = "192.169.56."
 IP_NW = "192.169.190."
@@ -61,9 +61,9 @@ Vagrant.configure("2") do |config|
         node.vm.provider "vmware_workstation" do |vb|
             #vb.hostname = "kubemaster"
             vb.vmx['displayname'] = 'kubemaster'
-            vb.memory = 2048
+            vb.memory = 4096
             vb.cpus = 2
-            vb.gui = true
+            vb.gui = false
         end
         node.vm.hostname = "kubemaster"
         node.vm.network :private_network, ip: IP_NW + "#{MASTER_IP_START + i}"
