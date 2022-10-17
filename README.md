@@ -146,6 +146,7 @@ kubeadm init --pod-network-cidr=<cidr> --apiserver-advertise-address=<control pl
 
 >**Note:** <br>
 >When using `containerd`, I had to use a minor [workaround](https://stackoverflow.com/questions/72504257/i-encountered-when-executing-kubeadm-init-error-issue) to the toml config file to get kubeadm to work. I can't understand why this line would be uncommented by default, but I'm sure there was a valid reason that I'm unaware of!
+> Be sure to run `systemctl daemon-reload && systemctl restart containerd` after the workaround.
 
 Once run successfully, either:
 
