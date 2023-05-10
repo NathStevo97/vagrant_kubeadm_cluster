@@ -61,7 +61,7 @@ Vagrant.configure("2") do |config|
         node.vm.provider "vmware_workstation" do |vb|
             #vb.hostname = "kubemaster"
             vb.vmx['displayname'] = 'kubemaster'
-            vb.memory = 4096
+            vb.memory = 2048
             vb.cpus = 2
             vb.gui = false
         end
