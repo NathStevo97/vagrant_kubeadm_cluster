@@ -84,7 +84,7 @@ source "vmware-iso" "packer-vagrant-ubuntu-virtual-box" {
   # ]
 
   boot_wait               = "5s"
-  http_directory          = "http"
+  http_directory          = "./packer/http"
   #guest_additions_path    = "VBoxGuestAdditions_{{.Version}}.iso"
   guest_os_type           = "ubuntu-64"
   headless                = "${var.non_gui}"
@@ -115,14 +115,14 @@ build {
     execute_command   = "echo 'vagrant' | {{ .Vars }} sudo -S -E bash '{{ .Path }}'"
     expect_disconnect = true
     scripts           = [
-      "scripts/update.sh",
-      "scripts/motd.sh",
-      "scripts/networking.sh",
-      "scripts/sudoers.sh",
-      "scripts/vagrant.sh",
-      "scripts/cleanup.sh",
-      "scripts/minimize.sh",
-      "scripts/node_setup.sh"
+      "./packer/scripts/update.sh",
+      "./packer/scripts/motd.sh",
+      "./packer/scripts/networking.sh",
+      "./packer/scripts/sudoers.sh",
+      "./packer/scripts/vagrant.sh",
+      "./packer/scripts/cleanup.sh",
+      "./packer/scripts/minimize.sh",
+      "./packer/scripts/node_setup.sh"
     ]
   }
 
