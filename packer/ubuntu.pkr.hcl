@@ -6,7 +6,7 @@ variable "ServerBaseVersion" {
 
 variable "box_tag" {
   type    = string
-  default = "nitindas/ubuntu-22"
+  default = "natstephenson15/ubuntu-22-kubernetes"
 }
 
 variable "checksum" {
@@ -26,7 +26,7 @@ variable "vagrantcloud_token" {
 
 variable "output_directory" {
   type    = string
-  default = "c:/vagrant-box"
+  default = "~/.vagrant.d/boxes"
 }
 
 locals { timestamp = regex_replace(timestamp(), "[- TZ:]", "") }
@@ -34,14 +34,15 @@ locals { timestamp = regex_replace(timestamp(), "[- TZ:]", "") }
 locals {
   file         = "http://releases.ubuntu.com/22.04/ubuntu-${var.ServerBaseVersion}-live-server-amd64.iso"
   osdetails    = "ubuntu-${local.vboxversion}-amd64"
+  os_name                   = "ubuntu"
+  os_arch                   = "x86_64"
   vboxversion  = "${var.ServerBaseVersion}"
   version      = "${local.timestamp}"
+  os_version                = "22.04"
   version_desc = "Latest kernel build of Ubuntu Vagrant images based on Ubuntu Server ${local.vboxversion} LTS (Jammy Jellyfish)"
 }
 
-# could not parse template for following block: "template: hcl2_upgrade:2: bad character U+0060 '`'"
-
-source "vmware-iso" "packer-vagrant-ubuntu-virtual-box" {
+source "vmware-iso" "packer-vagrant-ubuntu-vmware-box" {
   # boot_command = [
   #   "<wait>c<wait>set gfxpayload=keep<enter><wait>linux /casper/vmlinuz quiet autoinstall ds=nocloud-net\\;s=http://{{.HTTPIP}}:{{.HTTPPort}}/ ---<enter><wait>initrd /casper/initrd<wait><enter><wait>boot<enter><wait>"
   # ]
@@ -85,14 +86,12 @@ source "vmware-iso" "packer-vagrant-ubuntu-virtual-box" {
 
   boot_wait               = "5s"
   http_directory          = "./packer/http"
-  #guest_additions_path    = "VBoxGuestAdditions_{{.Version}}.iso"
   guest_os_type           = "ubuntu-64"
   headless                = "${var.non_gui}"
   iso_checksum            = "${var.checksum}"
   iso_url                 = "${local.file}"
-  #memory                  = 4096
   disk_size               = 50000
-  #output_directory        = "c:/vagrant-box"
+  #output_directory        = "${var.output_directory}"
   shutdown_command        = "echo 'vagrant'|sudo -S shutdown -P now"
   ssh_handshake_attempts  = "1000"
   ssh_keep_alive_interval = "90s"
@@ -100,16 +99,15 @@ source "vmware-iso" "packer-vagrant-ubuntu-virtual-box" {
   ssh_timeout             = "90m"
   ssh_username            = "vagrant"
   ssh_wait_timeout        = "6h"
-  #virtualbox_version_file = ".vbox_version"
   vmx_data = {
     memsize = "2048"
     numvcpus = "2"
   }
-  vm_name                 = "packer-vagrant-ubuntu-${local.vboxversion}-amd64"
+  vm_name                 = "vagrant-ubuntu-${local.vboxversion}-amd64"
 }
 
 build {
-  sources = ["source.vmware-iso.packer-vagrant-ubuntu-virtual-box"]
+  sources = ["source.vmware-iso.packer-vagrant-ubuntu-vmware-box"]
 
   provisioner "shell" {
     execute_command   = "echo 'vagrant' | {{ .Vars }} sudo -S -E bash '{{ .Path }}'"
@@ -127,17 +125,19 @@ build {
   }
 
   post-processors {
+
     post-processor "vagrant" {
       keep_input_artifact = false
       compression_level   = 9
+      provider_override   = "vmware"
+      output               = "${path.root}/../${local.os_name}-${local.os_version}-${local.os_arch}.{{ .Provider }}.box"
       }
-    }
-  /*
-    post-processor "vagrant-cloud" {
-      access_token        = "${var.vagrantcloud_token}"
-      box_tag             = "${var.box_tag}"
-      version             = "${local.vboxversion}-${local.version}"
-      version_description = "${local.version_desc}"
-    }
-  */
+
+    #post-processor "vagrant-cloud" {
+    #  access_token        = "${var.vagrantcloud_token}"
+    #  box_tag             = "${var.box_tag}"
+    #  version             = "${local.vboxversion}-${local.version}"
+    #  version_description = "${local.version_desc}"
+    #}
+  }
 }

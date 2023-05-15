@@ -2,3 +2,9 @@
 
 ### Vagrant ###
 .vagrant/
+
+**/*.box
+
+## Packer ##
+
+**/packer_cache

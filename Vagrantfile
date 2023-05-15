@@ -24,7 +24,8 @@ Vagrant.configure("2") do |config|
   # boxes at https://vagrantcloud.com/search.
   # config.vm.box = "base"
   #config.vm.box = "ubuntu/bionic64"
-  config.vm.box = "generic/ubuntu1804"
+  #config.vm.box = "generic/ubuntu1804"
+  config.vm.box = "ubuntu-22-vmware-k8s"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -56,9 +57,12 @@ Vagrant.configure("2") do |config|
 
   # Provision Master Nodes
   (1..NUM_MASTER_NODE).each do |i|
+      config.vm.provider :vmware_desktop do |vmware|
+        vmware.vmx["ethernet0.pcislotnumber"] = "33"
+      end
       config.vm.define "kubemaster" do |node|
         # Name shown in the GUI
-        node.vm.provider "vmware_workstation" do |vb|
+        node.vm.provider "vmware_desktop" do |vb|
             #vb.hostname = "kubemaster"
             vb.vmx['displayname'] = 'kubemaster'
             vb.memory = 2048
@@ -81,8 +85,11 @@ Vagrant.configure("2") do |config|
 
   # Provision Worker Nodes
   (1..NUM_WORKER_NODE).each do |i|
+    config.vm.provider :vmware_desktop do |vmware|
+      vmware.vmx["ethernet0.pcislotnumber"] = "33"
+    end
     config.vm.define "kubenode0#{i}" do |node|
-        node.vm.provider "vmware_workstation" do |vb|
+        node.vm.provider "vmware_desktop" do |vb|
             #vb.hostname = "kubenode0#{i}"
             vb.vmx['displayname'] = "kubenode0#{i}"
             vb.memory = 2048
