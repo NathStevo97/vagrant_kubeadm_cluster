@@ -4,8 +4,14 @@ box-build:
 box-init:
 	@vagrant box add ubuntu-22-vmware-k8s .\ubuntu-22.04-x86_64.vmware.box
 
-cluster-up:
+cluster-start:
 	@vagrant up
 
-cluster-pause:
+cluster-up:
+	@vagrant resume
+
+cluster-down:
 	@vagrant suspend
+
+cluster-reload:
+	@vagrant suspend && vagrant resume

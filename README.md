@@ -192,7 +192,7 @@ During Kubeadm Init on the ControlPlane or Kubeadm Join in the worker nodes, Kub
 
 ```bash
 systemctl status kubelet
-cat /var/lib/kubelet/kubeadm-flags.env  
+cat /var/lib/kubelet/kubeadm-flags.env
 ```
 
 2. Check Docker's config info
@@ -231,3 +231,5 @@ b. Add `$KUBELET_CGROUP_ARGS` to ExecStart in the file.
 kubeadm reset
 rm -rf ~/.kube/
 ```
+
+6. Properly configure the Systemd CGroup Driver as it's weird: https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd
