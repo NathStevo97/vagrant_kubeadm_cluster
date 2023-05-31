@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: disable swap
+    shell: |
+      sudo swapoff -a
+      sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+  - name: Add modules conf for k8s
+    blockinfile:
+      path: "/etc/modules-load.d/k8s.conf"
+      block: |
+            overlay
+            br_netfilter
+      create: yes
+
+  - name: Add modules
+    community.general.modprobe:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - overlay
+      - br_netfilter
+
+  - name: Set sysctl file and reload
+    ansible.posix.sysctl:
+      name: "{{ item }}"
+      value: '1'
+      state: present
+      reload: yes
+    with_items:
+      - net.ipv4.ip_forward
+      - net.bridge.bridge-nf-call-iptables
+      - net.bridge.bridge-nf-call-ip6tables
