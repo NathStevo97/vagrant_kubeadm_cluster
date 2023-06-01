@@ -1,0 +1,142 @@
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: disable swap
+    shell: |
+      sudo swapoff -a
+      sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+  - name: Add modules
+    community.general.modprobe:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - overlay
+      - br_netfilter
+
+  - name: Add modules conf for k8s
+    blockinfile:
+      path: "/etc/modules-load.d/k8s.conf"
+      block: |
+            overlay
+            br_netfilter
+      create: yes
+
+  - name: Set sysctl file and reload
+    ansible.posix.sysctl:
+      name: "{{ item }}"
+      value: '1'
+      state: present
+      reload: yes
+    with_items:
+      - net.ipv4.ip_forward
+      - net.bridge.bridge-nf-call-iptables
+      - net.bridge.bridge-nf-call-ip6tables
+
+  - name: Install supporting tools for installations
+    ansible.builtin.apt:
+      update_cache: yes
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+        - ca-certificates
+        - curl
+        - gnupg
+        - lsb-release
+        - apt-transport-https
+        - net-tools
+        - git
+
+  - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+  - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+        filename: docker.list
+
+  - name: Install supporting tools for installations
+    ansible.builtin.apt:
+      update_cache: yes
+      name: "{{ docker_packages }}"
+      state: present
+    vars:
+      docker_packages:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-compose-plugin
+
+  - name: Ensure group "docker" exists
+    ansible.builtin.group:
+      name: docker
+      state: present
+      gid: 1750
+
+  - name: Add the user 'vagrant' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
+    ansible.builtin.user:
+      name: vagrant
+      shell: /bin/bash
+      group: docker
+
+  - name: Create containerd config.toml
+    lineinfile:
+      line: ""
+      path: "/etc/containerd/config.toml"
+      create: yes
+
+  - name: Populate containerd config
+    shell: containerd config default | tee /etc/containerd/config.toml
+
+  - name: Set SystemdCgroup to true in containerd config
+    replace:
+      path: /etc/containerd/config.toml
+      regexp: "SystemdCgroup = false"
+      replace: "SystemdCgroup = true"
+
+  - name: Issue daemon-reload to pick up config changes, restart docker service
+    ansible.builtin.systemd:
+      state: restarted
+      daemon_reload: yes
+      name: docker
+
+  - name: Add an apt signing key for Kubernetes
+    apt_key:
+      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      state: present
+
+  - name: Adding apt repository for Kubernetes
+    apt_repository:
+      repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+      state: present
+      filename: kubernetes.list
+
+  - name: Install Kubernetes binaries
+    apt:
+      name: "{{ k8s_packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      k8s_packages:
+        - kubelet=1.26.4-00
+        - kubeadm=1.26.4-00
+        - kubectl=1.26.4-00
+
+  - name: Download Helm command line tool
+  ansible.builtin.uri:
+    url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    return_content: true
+  register: helm_installer
+
+- name: Install Helm
+  ansible.builtin.command:
+    cmd: bash
+    stdin: "{{ helm_installer.content }}"
+    creates: /usr/local/bin/helm
+  environment:
+    DESIRED_VERSION: "{{ helm_version | default('') }}"

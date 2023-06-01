@@ -123,6 +123,11 @@ build {
       "./packer/scripts/node_setup.sh"
     ]
   }
+  /*
+  provisioner "ansible-local" {
+    playbook_file = "./packer/scripts/node_setup.yaml"
+  }
+  */
 
   post-processors {
 
