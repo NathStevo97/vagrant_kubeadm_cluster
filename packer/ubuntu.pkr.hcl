@@ -119,15 +119,15 @@ build {
       "./packer/scripts/sudoers.sh",
       "./packer/scripts/vagrant.sh",
       "./packer/scripts/cleanup.sh",
-      "./packer/scripts/minimize.sh",
-      "./packer/scripts/node_setup.sh"
+      "./packer/scripts/minimize.sh"
+      #"./packer/scripts/node_setup.sh"
     ]
   }
-  /*
+
   provisioner "ansible-local" {
     playbook_file = "./packer/scripts/node_setup.yaml"
   }
-  */
+  
 
   post-processors {
 

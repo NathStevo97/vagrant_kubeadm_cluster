@@ -1,11 +1,17 @@
 ---
-- hosts: all
+- hosts: localhost
   become: true
   tasks:
-  - name: disable swap
-    shell: |
-      sudo swapoff -a
-      sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+  - name: Disable swap for current session
+    command: swapoff -a
+    become: true
+
+  - name: Disable swap permanently, persist reboots
+    replace:
+      path: /etc/fstab
+      regexp: '^(\s*)([^#\n]+\s+)(\w+\s+)swap(\s+.*)$'
+      replace: '#\1\2\3swap\4'
+      backup: yes
 
   - name: Add modules
     community.general.modprobe:
@@ -21,14 +27,14 @@
       block: |
             overlay
             br_netfilter
-      create: yes
+      create: true
 
   - name: Set sysctl file and reload
     ansible.posix.sysctl:
       name: "{{ item }}"
       value: '1'
       state: present
-      reload: yes
+      reload: true
     with_items:
       - net.ipv4.ip_forward
       - net.bridge.bridge-nf-call-iptables
@@ -36,7 +42,7 @@
 
   - name: Install supporting tools for installations
     ansible.builtin.apt:
-      update_cache: yes
+      update_cache: true
       name: "{{ packages }}"
       state: present
     vars:
@@ -50,19 +56,19 @@
         - git
 
   - name: Add Docker GPG apt Key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
 
   - name: Add Docker Repository
-      apt_repository:
-        repo: deb https://download.docker.com/linux/ubuntu focal stable
-        state: present
-        filename: docker.list
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu focal stable
+      state: present
+      filename: docker.list
 
   - name: Install supporting tools for installations
     ansible.builtin.apt:
-      update_cache: yes
+      update_cache: true
       name: "{{ docker_packages }}"
       state: present
     vars:
@@ -88,7 +94,7 @@
     lineinfile:
       line: ""
       path: "/etc/containerd/config.toml"
-      create: yes
+      create: true
 
   - name: Populate containerd config
     shell: containerd config default | tee /etc/containerd/config.toml
@@ -102,7 +108,7 @@
   - name: Issue daemon-reload to pick up config changes, restart docker service
     ansible.builtin.systemd:
       state: restarted
-      daemon_reload: yes
+      daemon_reload: true
       name: docker
 
   - name: Add an apt signing key for Kubernetes
@@ -120,7 +126,7 @@
     apt:
       name: "{{ k8s_packages }}"
       state: present
-      update_cache: yes
+      update_cache: true
     vars:
       k8s_packages:
         - kubelet=1.26.4-00
@@ -128,15 +134,15 @@
         - kubectl=1.26.4-00
 
   - name: Download Helm command line tool
-  ansible.builtin.uri:
-    url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-    return_content: true
-  register: helm_installer
+    ansible.builtin.uri:
+      url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      return_content: true
+    register: helm_installer
 
-- name: Install Helm
-  ansible.builtin.command:
-    cmd: bash
-    stdin: "{{ helm_installer.content }}"
-    creates: /usr/local/bin/helm
-  environment:
-    DESIRED_VERSION: "{{ helm_version | default('') }}"
+  - name: Install Helm
+    ansible.builtin.command:
+      cmd: bash
+      stdin: "{{ helm_installer.content }}"
+      creates: /usr/local/bin/helm
+    environment:
+      DESIRED_VERSION: "{{ helm_version | default('') }}"
