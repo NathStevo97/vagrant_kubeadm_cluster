@@ -2,14 +2,14 @@
 
 This is a modified version of [Kodekloud's Kubeadm Cluster setup](https://github.com/kodekloudhub/certified-kubernetes-administrator-course) for VMWare Workstation rather than Oracle Virtualbox for improved performance and usability.
 
-# Prerequisites
+## Prerequisites
 
 - Install [Vagrant](https://www.vagrantup.com/downloads)
 - Install [VMWare Workstation](https://www.vmware.com/uk/products/workstation-pro/workstation-pro-evaluation.html)
 - Install the [Vagrant VMWare Desktop Utility](https://www.vagrantup.com/docs/providers/vmware/vagrant-vmware-utility)
 - Install the [Vagrant VMWare Workstation Provider](https://www.vagrantup.com/docs/providers/vmware/installation)
 
-# Installing Container Runtime
+## Installing Container Runtime
 
 Ref : <https://kubernetes.io/docs/setup/production-environment/container-runtimes/>
 
@@ -91,7 +91,7 @@ sudo service docker start
 sudo docker run hello-world
 ```
 
-# Installing Kubeadm and Kubernetes Components
+## Installing Kubeadm and Kubernetes Components
 
 As a prerequisite, Swap **MUST** be disbled for Kubelet to work; run on all nodes required:
 
@@ -127,11 +127,11 @@ sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
-# Create a Cluster with kubeadm
+## Create a Cluster with kubeadm
 
 Ref: <https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/>
 
-## Initializing the ControlPlane Node
+### Initializing the ControlPlane Node
 
 Run `kubeadm init <args>`, supplying `<args>` as required based on the following steps
 
@@ -144,7 +144,7 @@ Run `kubeadm init <args>`, supplying `<args>` as required based on the following
 kubeadm init --pod-network-cidr=<cidr> --apiserver-advertise-address=<control plane IP> --cri-socket=unix:////run/containerd/containerd.sock
 ```
 
->**Note:** <br>
+>**Note:**
 >When using `containerd`, I had to use a minor [workaround](https://stackoverflow.com/questions/72504257/i-encountered-when-executing-kubeadm-init-error-issue) to the toml config file to get kubeadm to work. I can't understand why this line would be uncommented by default, but I'm sure there was a valid reason that I'm unaware of!
 > Be sure to run `systemctl daemon-reload && systemctl restart containerd` after the workaround.
 
@@ -152,17 +152,17 @@ Once run successfully, either:
 
 - As a regular user, run:
 
-```bash
- mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
-```
+  ```bash
+  mkdir -p $HOME/.kube
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  ```
 
 - As root user:
 
-```bash
- export KUBECONFIG=/etc/kubernetes/admin.conf
-```
+  ```bash
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+  ```
 
 Then deploy a pod network to the cluster - I personally go with either Calico or Flannel.
 
@@ -182,54 +182,54 @@ kubeadm join 192.169.190.2:6443 --token <token> \
         --discovery-token-ca-cert-hash sha256:<hash>
 ```
 
-# Troubleshooting and Notes
+## Troubleshooting and Notes
 
 To determine the Virtual Network Settings in VMWare Workstation, navigate to **Edit -> Virtual Network Preferences**
 
 During Kubeadm Init on the ControlPlane or Kubeadm Join in the worker nodes, Kubelet may fail to start. In my case, I found this to be an issue with the CGroup Driver used by Kubeadm and Docker conflicting. The following steps can be used to resolve this ([reference StackOverFlow Thread](https://stackoverflow.com/questions/62216678/kubeadm-init-issue)):
 
-1. Check the kubeadm environment variables defined in the config file referenced by kubelet <br>
+1. Check the kubeadm environment variables defined in the config file referenced by kubelet.
 
-```bash
-systemctl status kubelet
-cat /var/lib/kubelet/kubeadm-flags.env
-```
+    ```bash
+    systemctl status kubelet
+    cat /var/lib/kubelet/kubeadm-flags.env
+    ```
 
-2. Check Docker's config info
+1. Check Docker's config info
 
-```bash
-sudo docker info | grep Cgroup
-```
+    ```bash
+    sudo docker info | grep Cgroup
+    ```
 
-3. If the Docker config requires alteration:
+1. If the Docker config requires alteration:
 
-```bash
-cat << EOF > /etc/docker/daemon.json
-{
-  "exec-opts": ["native.cgroupdriver=systemd"]
-}
-EOF
-```
+    ```bash
+    cat << EOF > /etc/docker/daemon.json
+    {
+      "exec-opts": ["native.cgroupdriver=systemd"]
+    }
+    EOF
+    ```
 
-4. Update the Kubelet CGroup Driver Configuration
+1. Update the Kubelet CGroup Driver Configuration
 
-```bash
-`vi /etc/systemd/system/kubelet.service.d/10-kubeadm.conf`
-```
+    ```bash
+    vi /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    ```
 
-a. Add the following before ExecStart:
+    a. Add the following before ExecStart:
 
-```bash
-Environment="KUBELET_CGROUP_ARGS=--cgroup-driver=<cgroupfs or systemd>"
-```
+    ```bash
+    Environment="KUBELET_CGROUP_ARGS=--cgroup-driver=<cgroupfs or systemd>"
+    ```
 
-b. Add `$KUBELET_CGROUP_ARGS` to ExecStart in the file.
+    b. Add `$KUBELET_CGROUP_ARGS` to ExecStart in the file.
 
-5. Reboot the machine (manually or via vagrant) and run the following before running **kubeadm init/join** again:
+1. Reboot the machine (manually or via vagrant) and run the following before running **kubeadm init/join** again:
 
-```bash
-kubeadm reset
-rm -rf ~/.kube/
-```
+    ```bash
+    kubeadm reset
+    rm -rf ~/.kube/
+    ```
 
-6. Properly configure the Systemd CGroup Driver as it's weird: https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd
+1. Properly configure the Systemd CGroup Driver as it's weird: <https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd>
