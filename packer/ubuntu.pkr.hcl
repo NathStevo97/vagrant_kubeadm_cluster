@@ -1,7 +1,17 @@
 
 variable "ServerBaseVersion" {
   type    = string
-  default = "22.04.2"
+  default = "22.04.3"
+}
+
+variable "boot_command" {
+  type    = list(string)
+  default = []
+}
+
+variable "boot_wait" {
+  type    = string
+  default = "10s"
 }
 
 variable "box_tag" {
@@ -9,9 +19,34 @@ variable "box_tag" {
   default = "natstephenson15/ubuntu-22-kubernetes"
 }
 
-variable "checksum" {
+variable "cpu" {
+  type    = string
+  default = "2"
+}
+
+variable "disk_size" {
+  type    = string
+  default = "70000"
+}
+
+variable "disk_additional_size" {
+  type    = list(number)
+  default = ["1024"]
+}
+
+variable "http_directory" {
+  type    = string
+  default = ""
+}
+
+variable "iso_checksum" {
   type    = string
   default = "file:https://releases.ubuntu.com/jammy/SHA256SUMS"
+}
+
+variable "memory" {
+  type    = string
+  default = "4096"
 }
 
 variable "non_gui" {
@@ -19,14 +54,39 @@ variable "non_gui" {
   default = "true"
 }
 
+variable "output_directory" {
+  type    = string
+  default = "~/.vagrant.d/boxes"
+}
+
+variable "ssh_password" {
+  type    = string
+  default = "vagrant"
+}
+
+variable "ssh_username" {
+  type    = string
+  default = "vagrant"
+}
+
+variable "switch_name" {
+  type    = string
+  default = ""
+}
+
 variable "vagrantcloud_token" {
   type    = string
   default = "${env("VAGRANT_CLOUD_TOKEN")}"
 }
 
-variable "output_directory" {
+variable "vlan_id" {
   type    = string
-  default = "~/.vagrant.d/boxes"
+  default = ""
+}
+
+variable "vm_name" {
+  type    = string
+  default = ""
 }
 
 locals { timestamp = regex_replace(timestamp(), "[- TZ:]", "") }
@@ -34,81 +94,44 @@ locals { timestamp = regex_replace(timestamp(), "[- TZ:]", "") }
 locals {
   file         = "http://releases.ubuntu.com/22.04/ubuntu-${var.ServerBaseVersion}-live-server-amd64.iso"
   osdetails    = "ubuntu-${local.vboxversion}-amd64"
-  os_name                   = "ubuntu"
-  os_arch                   = "x86_64"
+  os_name      = "ubuntu"
+  os_arch      = "x86_64"
   vboxversion  = "${var.ServerBaseVersion}"
   version      = "${local.timestamp}"
-  os_version                = "22.04"
+  os_version   = "22.04"
   version_desc = "Latest kernel build of Ubuntu Vagrant images based on Ubuntu Server ${local.vboxversion} LTS (Jammy Jellyfish)"
 }
 
-source "vmware-iso" "packer-vagrant-ubuntu-vmware-box" {
-  # boot_command = [
-  #   "<wait>c<wait>set gfxpayload=keep<enter><wait>linux /casper/vmlinuz quiet autoinstall ds=nocloud-net\\;s=http://{{.HTTPIP}}:{{.HTTPPort}}/ ---<enter><wait>initrd /casper/initrd<wait><enter><wait>boot<enter><wait>"
-  # ]
-
-  boot_command = [
-    "<wait>c<wait>",
-    "set gfxpayload=keep<enter><wait>",
-    # "linux /casper/vmlinuz autoinstall quiet ds='nocloud-net;s=http://{{.HTTPIP}}:{{.HTTPPort}}/' ---<enter><wait>",
-    "linux /casper/vmlinuz autoinstall ds='nocloud-net;s=http://{{.HTTPIP}}:{{.HTTPPort}}/' ---<enter><wait>",
-    "initrd /casper/initrd<wait><enter><wait>",
-    "boot<enter><wait>"
-  ]
-
-  # boot_command = [
-  #   "<wait>c<wait>",
-  #   "set gfxpayload=keep<enter><wait>",
-  #   "linux /casper/vmlinuz <wait>",
-  #   "autoinstall quiet fsck.mode=skip <wait>",
-  #   "ipv6.disable=1 net.ifnames=0 biosdevname=0 systemd.unified_cgroup_hierarchy=0 ds='nocloud-net;s=http://{{.HTTPIP}}:{{.HTTPPort}}/' ---<enter><wait>",
-  #   "initrd /casper/initrd<wait><enter><wait>",
-  #   "boot<enter><wait>"
-  # ]
-
-  # boot_command = [
-  #   "<wait>c<wait>",
-  #   "set gfxpayload=keep<enter><wait>",
-  #   "linux /casper/vmlinuz --- autoinstall ds='nocloud-net;seedfrom=http://{{.HTTPIP}}:{{.HTTPPort}}/'<enter><wait>",
-  #   "initrd /casper/initrd<wait><enter><wait>",
-  #   "boot<enter>",
-  #   "<enter><f10><wait>"
-  # ]
-
-  # boot_command = [
-  #   "<wait>c<wait>",
-  #   "set gfxpayload=keep<enter><wait>",
-  #   "linux /casper/vmlinuz autoinstall ds='nocloud-net;seedfrom=http://{{.HTTPIP}}:{{.HTTPPort}}/' ---<enter><wait>",
-  #   "initrd /casper/initrd<wait><enter><wait>",
-  #   "boot<enter>",
-  #   "<enter><f10><wait>"
-  # ]
-
-  boot_wait               = "5s"
-  http_directory          = "./packer/http"
-  guest_os_type           = "ubuntu-64"
-  headless                = "${var.non_gui}"
-  iso_checksum            = "${var.checksum}"
-  iso_url                 = "${local.file}"
-  disk_size               = 50000
+source "hyperv-iso" "ubuntu-k8s-box" {
+  boot_command          = "${var.boot_command}"
+  boot_wait             = "${var.boot_wait}"
+  communicator          = "ssh"
+  cpus                  = "${var.cpu}"
+  disk_block_size       = "1"
+  disk_size             = "${var.disk_size}"
+  enable_dynamic_memory = "true"
+  enable_secure_boot    = false
+  generation            = 2
+  guest_additions_mode  = "disable"
+  headless              = "${var.non_gui}"
+  http_directory        = "./packer/http"
+  iso_checksum          = "${var.iso_checksum}"
+  iso_url               = "${local.file}"
   #output_directory        = "${var.output_directory}"
-  shutdown_command        = "echo 'vagrant'|sudo -S shutdown -P now"
+  shutdown_command        = "echo 'password'|sudo -S shutdown -P now"
   ssh_handshake_attempts  = "1000"
   ssh_keep_alive_interval = "90s"
-  ssh_password            = "vagrant"
-  ssh_timeout             = "90m"
-  ssh_username            = "vagrant"
+  ssh_password            = "${var.ssh_password}"
+  ssh_timeout             = "6h"
+  ssh_username            = "${var.ssh_username}"
   ssh_wait_timeout        = "6h"
-  vmx_data = {
-    memsize = "2048"
-    numvcpus = "2"
-  }
+  switch_name           = "${var.switch_name}"
   vm_name                 = "vagrant-ubuntu-${local.vboxversion}-amd64"
 }
 
 build {
-  sources = ["source.vmware-iso.packer-vagrant-ubuntu-vmware-box"]
-
+  sources = ["source.hyperv-iso.ubuntu-k8s-box"]
+  /*
   provisioner "shell" {
     execute_command   = "echo 'vagrant' | {{ .Vars }} sudo -S -E bash '{{ .Path }}'"
     expect_disconnect = true
@@ -120,21 +143,20 @@ build {
       "./packer/scripts/vagrant.sh",
       "./packer/scripts/cleanup.sh",
       "./packer/scripts/minimize.sh"
-      #"./packer/scripts/node_setup.sh"
     ]
-  }
-
+  } */
+  /*
   provisioner "ansible-local" {
     playbook_file = "./packer/scripts/node_setup.yaml"
   }
-  
+*/
 
   post-processors {
 
     post-processor "vagrant" {
       keep_input_artifact = false
       compression_level   = 9
-      provider_override   = "vmware"
+      #provider_override   = "hyperv"
       output               = "${path.root}/../${local.os_name}-${local.os_version}-${local.os_arch}.{{ .Provider }}.box"
       }
 
@@ -145,4 +167,5 @@ build {
     #  version_description = "${local.version_desc}"
     #}
   }
+
 }

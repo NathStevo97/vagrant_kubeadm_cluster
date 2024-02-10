@@ -113,12 +113,12 @@
 
   - name: Add an apt signing key for Kubernetes
     apt_key:
-      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
       state: present
 
   - name: Adding apt repository for Kubernetes
     apt_repository:
-      repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+      repo: deb https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
       state: present
       filename: kubernetes.list
 
@@ -129,9 +129,9 @@
       update_cache: true
     vars:
       k8s_packages:
-        - kubelet=1.26.4-00
-        - kubeadm=1.26.4-00
-        - kubectl=1.26.4-00
+        - kubelet=1.29.1-1.1
+        - kubeadm=1.29.1-1.1
+        - kubectl=1.29.1-1.1
 
   - name: Download Helm command line tool
     ansible.builtin.uri:
