@@ -84,9 +84,9 @@
       state: present
       gid: 1750
 
-  - name: Add the user 'vagrant' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
+  - name: Add the user 'ubuntu' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
     ansible.builtin.user:
-      name: vagrant
+      name: ubuntu
       shell: /bin/bash
       group: docker
 
@@ -115,13 +115,14 @@
     apt_key:
       url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
       state: present
+      keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
   - name: Adding apt repository for Kubernetes
     apt_repository:
-      repo: deb https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+      repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
       state: present
-      filename: kubernetes.list
-
+      filename: kubernetes
+      
   - name: Install Kubernetes binaries
     apt:
       name: "{{ k8s_packages }}"

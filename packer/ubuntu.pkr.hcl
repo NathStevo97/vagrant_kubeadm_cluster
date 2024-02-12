@@ -149,15 +149,16 @@ build {
       "./packer/scripts/networking.sh",
       "./packer/scripts/sudoers.sh",
       "./packer/scripts/vagrant.sh",
+      "./packer/scripts/ansible.sh",
       "./packer/scripts/cleanup.sh",
       "./packer/scripts/minimize.sh"
     ]
   }
-  /*
+
   provisioner "ansible-local" {
     playbook_file = "./packer/scripts/node_setup.yaml"
   }
-*/
+
 
   post-processors {
 
