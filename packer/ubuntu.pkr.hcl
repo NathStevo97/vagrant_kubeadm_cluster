@@ -118,7 +118,7 @@ source "hyperv-iso" "ubuntu-k8s-box" {
   iso_checksum          = "${var.iso_checksum}"
   iso_url               = "${local.file}"
   #output_directory        = "${var.output_directory}"
-  shutdown_command        = "echo 'password'|sudo -S shutdown -P now"
+  shutdown_command        = "echo 'password' | sudo -S shutdown -P now"
   ssh_handshake_attempts  = "1000"
   ssh_keep_alive_interval = "90s"
   ssh_password            = "${var.ssh_password}"
@@ -131,12 +131,20 @@ source "hyperv-iso" "ubuntu-k8s-box" {
 
 build {
   sources = ["source.hyperv-iso.ubuntu-k8s-box"]
-  /*
+
   provisioner "shell" {
-    execute_command   = "echo 'vagrant' | {{ .Vars }} sudo -S -E bash '{{ .Path }}'"
+    execute_command   = "echo 'password' | {{ .Vars }} sudo -S -E bash '{{ .Path }}'"
+    expect_disconnect = true
+    scripts = [
+      "./packer/scripts/init_hyperv.sh",
+      "./packer/scripts/uefi.sh"
+    ]
+  }
+
+  provisioner "shell" {
+    execute_command   = "echo 'password' | {{ .Vars }} sudo -S -E bash '{{ .Path }}'"
     expect_disconnect = true
     scripts           = [
-      "./packer/scripts/update.sh",
       "./packer/scripts/motd.sh",
       "./packer/scripts/networking.sh",
       "./packer/scripts/sudoers.sh",
@@ -144,7 +152,7 @@ build {
       "./packer/scripts/cleanup.sh",
       "./packer/scripts/minimize.sh"
     ]
-  } */
+  }
   /*
   provisioner "ansible-local" {
     playbook_file = "./packer/scripts/node_setup.yaml"

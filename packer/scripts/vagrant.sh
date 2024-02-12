@@ -1,7 +1,7 @@
 #!/bin/sh -eux
 
 # set a default HOME_DIR environment variable if not set
-HOME_DIR="${HOME_DIR:-/home/vagrant}";
+HOME_DIR="${HOME_DIR:-/home/ubuntu}";
 
 pubkey_url="https://raw.githubusercontent.com/hashicorp/vagrant/main/keys/vagrant.pub";
 mkdir -p "$HOME_DIR"/.ssh;
@@ -15,5 +15,5 @@ else
     echo "Cannot download vagrant public key";
     exit 1;
 fi
-chown -R vagrant "$HOME_DIR"/.ssh;
+chown -R ubuntu "$HOME_DIR"/.ssh;
 chmod -R go-rwsx "$HOME_DIR"/.ssh;
