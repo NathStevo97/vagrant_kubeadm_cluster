@@ -1,4 +1,4 @@
-# VMWare Kubeadm Cluster
+# Vagrant Kubeadm Cluster
 
 This is a modified version of [Kodekloud's Kubeadm Cluster setup](https://github.com/kodekloudhub/certified-kubernetes-administrator-course) for VMWare Workstation rather than Oracle Virtualbox for improved performance and usability.
 
