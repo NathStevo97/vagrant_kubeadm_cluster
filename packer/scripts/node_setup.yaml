@@ -113,16 +113,16 @@
 
   - name: Add an apt signing key for Kubernetes
     apt_key:
-      url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+      url: https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key
       state: present
       keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
   - name: Adding apt repository for Kubernetes
     apt_repository:
-      repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+      repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /
       state: present
       filename: kubernetes
-      
+
   - name: Install Kubernetes binaries
     apt:
       name: "{{ k8s_packages }}"
@@ -130,9 +130,9 @@
       update_cache: true
     vars:
       k8s_packages:
-        - kubelet=1.29.1-1.1
-        - kubeadm=1.29.1-1.1
-        - kubectl=1.29.1-1.1
+        - kubelet=1.32.0-1.1
+        - kubeadm=1.32.0-1.1
+        - kubectl=1.32.0-1.1
 
   - name: Download Helm command line tool
     ansible.builtin.uri:

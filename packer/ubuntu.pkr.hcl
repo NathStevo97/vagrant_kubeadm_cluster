@@ -165,8 +165,8 @@ build {
     post-processor "vagrant" {
       keep_input_artifact = false
       compression_level   = 9
-      #provider_override   = "hyperv"
-      output               = "${path.root}/../${local.os_name}-${local.os_version}-${local.os_arch}.{{ .Provider }}.box"
+      provider_override   = "hyperv"
+      output               = "${path.root}/${local.os_name}-${local.os_version}-${local.os_arch}.{{ .Provider }}.box"
       }
 
     #post-processor "vagrant-cloud" {
@@ -176,5 +176,4 @@ build {
     #  version_description = "${local.version_desc}"
     #}
   }
-
 }

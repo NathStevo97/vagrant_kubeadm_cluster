@@ -8,3 +8,5 @@
 ## Packer ##
 
 **/packer_cache
+
+.vscode/*
